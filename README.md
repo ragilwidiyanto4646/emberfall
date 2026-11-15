@@ -1,22 +1,27 @@
+[![make.fun — Best Game 01](https://make.fun/badge/best-game-01.svg)](https://make.fun/bounty/best-game-01)
+[![EMBERFALL rank on make.fun](https://make.fun/badge/best-game-01/ragilwidiyanto4646/emberfall/rank.svg)](https://make.fun/bounty/best-game-01)
+[![EMBERFALL reward on make.fun](https://make.fun/badge/best-game-01/ragilwidiyanto4646/emberfall/reward.svg)](https://make.fun/bounty/best-game-01)
+
 # EMBERFALL — Keeper of the Last Lantern
 
-A 2D canvas arena survival game. You play the Keeper of the Last Lantern:
-fend off waves of ember creatures, gather the embers they drop, level up,
-pick upgrades, and hold out until dawn.
+A 2D arena survival game drawn on a canvas. You are the Keeper of the Last
+Lantern: hold the light against waves of ember creatures, gather the embers
+they leave behind, grow stronger with each level, and survive until dawn.
 
-Made for the make.fun **best-game-01** bounty. It runs completely offline in
-a desktop browser, straight from static files — no network, no libraries,
-just HTML, CSS and JavaScript on a canvas.
+Built as an entry for the make.fun bounty
+[best-game-01](https://make.fun/bounty/best-game-01) — "Make the best game".
+It runs fully offline in a desktop browser from static files: no network
+calls, no libraries, just plain HTML, CSS and JavaScript.
 
-## Playing
+## How to play
 
 - **Move** with WASD or the arrow keys.
-- **Attack** with the mouse — shots fly toward the cursor.
+- **Shoot** with the mouse — your shots fly toward the cursor.
 - **Pause** with P or Esc.
-- Enemies drop embers when they fall; collect them to level up and choose
-  upgrades. If the lantern goes out, the run is over.
+- Fallen enemies drop embers. Collect them to level up and pick an upgrade.
+  If the lantern burns out, the run ends.
 
-## Running it locally
+## Run it locally
 
 ```sh
 node serve.ts
@@ -24,7 +29,7 @@ node serve.ts
 
 Then open http://localhost:8080 in a desktop browser.
 
-## Producing the hand-in output
+## Build the hand-in output
 
 ```sh
 MAKEFUN_OUTPUT_DIR=out node main.ts
@@ -35,8 +40,8 @@ That copies `game/` and `screenshots/` into `out/` and writes
 
 ## Screenshots
 
-`screenshots/` contains four genuine in-game captures: the title screen,
-gameplay, a level-up choice, and the victory screen.
+`screenshots/` holds four real in-game captures: the title screen, a fight in
+progress, a level-up choice, and the victory screen.
 
 ## License
 
