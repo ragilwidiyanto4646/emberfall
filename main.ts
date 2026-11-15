@@ -1,41 +1,57 @@
-// A working best-game-01 entry (Node 22, standard library only): the game is this directory's
-// game/ folder, plain static files a desktop browser loads offline (game/index.html and its ES
-// modules, no library and no network request), and the program hands it in. It copies game/ and
-// screenshots/ from beside this file to /output and writes /output/dossier.json, the summary the
-// judge reads, with the vendored make.fun library. A starting point, not a winner: Block Dodger, a
-// plain 2D canvas game where a paddle dodges falling blocks and catches coins, with a title screen,
-// score, lives and levels, game over and restart, flat colours and no sound. Build your own game
-// (any genre, any library you vendor under game/, or none), put your 3 or 4 PNG or JPEG screenshots
-// in screenshots/ (the first by name is the cover) and run it.
+// EMBERFALL — entrypoint: hands the finished game in for grading.
 //
-// Serve it locally with `node serve.ts`, then open http://localhost:8080.
-// Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
-//   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
+// What this file does, in plain terms: it gathers the two folders that make
+// up the entry (the playable game and its screenshots), drops them into the
+// output directory the grader looks at, and then asks the vendored dossier
+// builder to describe everything it just placed there in dossier.json.
+//
+// It runs on plain Node with nothing but the standard library, and it never
+// touches the network. The output directory comes from MAKEFUN_OUTPUT_DIR;
+// when that variable is absent the grader's own /output is used instead.
 
 import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-game.ts';
 
-const here = fileURLToPath(new URL('.', import.meta.url));
-const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
+// Where this program lives on disk: the repository root, next to game/ and
+// screenshots/. Everything below is resolved from here, never from the
+// working directory the grader happens to launch us from.
+const repoRoot = dirname(fileURLToPath(import.meta.url));
 
-mkdirSync(out, { recursive: true });
-cpSync(join(here, 'game'), join(out, 'game'), { recursive: true });
-mkdirSync(join(out, 'screenshots'), { recursive: true });
-if (existsSync(join(here, 'screenshots'))) cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
+// The grader points us at its output with an environment variable; outside
+// the grader we fall back to the same path it would have used.
+const handInDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
-// The scorer's own caps (reference/gate.json): only text_max_bytes shapes the bytes; the others refuse an entry the
-// scorer would refuse (more than 4 screenshots or one over 256 KiB; more than 993 files in game/ or 48 MiB of game
-// files, in all, or a path under game/ over 1000 bytes: game/ counts beside /output's own 1000-entry cap, its
-// screenshots/ and dossier.json).
-writeFileSync(
-  join(out, 'dossier.json'),
-  buildDossier(out, {
-    text_max_bytes: 163840,
-    screenshots: { max: 4, max_bytes: 262144 },
-    game_max_files: 993,
-    game_max_bytes: 50331648,
-    game_path_max_bytes: 1000,
-  }),
-);
+// The dossier builder's limits for this bounty: how much text it may pack,
+// how many screenshots and how large each may be, and how much game it may
+// describe (file count, total bytes, and the longest single path).
+const dossierCaps = {
+  text_max_bytes: 163840,
+  screenshots: { max: 4, max_bytes: 262144 },
+  game_max_files: 993,
+  game_max_bytes: 50331648,
+  game_path_max_bytes: 1000,
+};
+
+// Make the destination exist first, parents included, so the copies below
+// never fail on a missing directory.
+mkdirSync(handInDir, { recursive: true });
+
+// The game itself always ships: mirror the whole folder, contents and all.
+cpSync(join(repoRoot, 'game'), join(handInDir, 'game'), { recursive: true });
+
+// Screenshots are optional on disk but their folder is always prepared, so
+// the dossier step sees the layout it expects either way.
+const shotsOut = join(handInDir, 'screenshots');
+mkdirSync(shotsOut, { recursive: true });
+const shotsIn = join(repoRoot, 'screenshots');
+if (existsSync(shotsIn)) {
+  cpSync(shotsIn, shotsOut, { recursive: true });
+}
+
+// Describe what was handed in. buildDossier reads the folders we just
+// placed and returns the dossier as canonical JSON bytes, so the file we
+// write is exactly what the builder produced — nothing added, nothing lost.
+const dossier = buildDossier(handInDir, dossierCaps);
+writeFileSync(join(handInDir, 'dossier.json'), dossier);
