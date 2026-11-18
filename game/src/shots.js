@@ -191,15 +191,16 @@ export function stageShot(name, world) {
     }
     return { screen: world.state.over ? SCREEN_OVER : SCREEN_PLAY, best: world.state.score };
   }
-  // play: a busy mid-fight frame. First fight to wave 4, then hold fire for a few
-  // seconds so the swarm builds around the lantern, then open fire again — the shot
-  // catches the fight at its thickest, with bolts, shards and shadows on screen.
+  // play: a busy mid-fight frame. Fight to the start of wave 4, then hold fire while
+  // the fresh swarm walks in from the edges — the shot catches a dozen shadows
+  // converging on the lantern, red telegraph threads and all, bolts still flying
+  // from the last volley. (Firing through the build-up thins the swarm too fast
+  // for a dense frame, so the keeper only gathers shards here.)
   for (let i = 0; i < PLAY_LIMIT_SECONDS / STEP; i += 1) {
     const events = autoStep(world, autopilot);
     if (events & EVENT_OVER) break;
     if (world.state.waves.wave >= 4) break;
   }
-  for (let i = 0; i < 8 / STEP && !world.state.over; i += 1) autoStep(world, gatherPilot);
-  for (let i = 0; i < 1.5 / STEP && !world.state.over; i += 1) autoStep(world, autopilot);
+  for (let i = 0; i < 6 / STEP && !world.state.over; i += 1) autoStep(world, gatherPilot);
   return { screen: SCREEN_PLAY, best: world.state.score };
 }

@@ -2,7 +2,7 @@
 // A choice is offered only while it still does something — a maxed blessing never shows
 // again, and the lantern-mending blessing only appears while the lantern is hurt.
 
-import { LANTERN_AURA_BASE_RADIUS, NOVA } from './config.js';
+import { LANTERN_AURA_BASE_RADIUS, NOVA, PLAYER } from './config.js';
 
 export const UPGRADES = [
   {
@@ -10,8 +10,8 @@ export const UPGRADES = [
     name: 'Rapid Embers',
     desc: '+18% fire rate — your bolts fly faster.',
     max: 5,
-    level: (p) => Math.round((0.34 / p.fireInterval - 1) / 0.18),
-    canOffer: (p) => p.fireInterval > 0.34 / 1.18 ** 5 + 0.001,
+    level: (p) => Math.round((PLAYER.fireInterval / p.fireInterval - 1) / 0.18),
+    canOffer: (p) => p.fireInterval > PLAYER.fireInterval / 1.18 ** 5 + 0.001,
     apply: (p) => { p.fireInterval /= 1.18; },
   },
   {
@@ -28,8 +28,8 @@ export const UPGRADES = [
     name: 'Heavy Embers',
     desc: '+30% bolt damage — shadows burst sooner.',
     max: 5,
-    level: (p) => Math.round((p.damage / 14 - 1) / 0.3),
-    canOffer: (p) => p.damage < 14 * 1.3 ** 5 + 0.01,
+    level: (p) => Math.round((p.damage / PLAYER.boltDamage - 1) / 0.3),
+    canOffer: (p) => p.damage < PLAYER.boltDamage * 1.3 ** 5 + 0.01,
     apply: (p) => { p.damage *= 1.3; },
   },
   {
@@ -55,8 +55,8 @@ export const UPGRADES = [
     name: 'Swift Wisp',
     desc: '+12% movement speed — outrun the dark.',
     max: 4,
-    level: (p) => Math.round((p.speed / 255 - 1) / 0.12),
-    canOffer: (p) => p.speed < 255 * 1.12 ** 4 + 0.01,
+    level: (p) => Math.round((p.speed / PLAYER.speed - 1) / 0.12),
+    canOffer: (p) => p.speed < PLAYER.speed * 1.12 ** 4 + 0.01,
     apply: (p) => { p.speed *= 1.12; },
   },
   {
@@ -73,8 +73,8 @@ export const UPGRADES = [
     name: 'Ember Heart',
     desc: '+25 max health and mend 25 now.',
     max: 4,
-    level: (p) => Math.round((p.maxHp / 100 - 1) / 0.25),
-    canOffer: (p) => p.maxHp < 200,
+    level: (p) => Math.round((p.maxHp / PLAYER.maxHp - 1) / 0.25),
+    canOffer: (p) => p.maxHp < PLAYER.maxHp + 100,
     apply: (p) => { p.maxHp += 25; p.hp = Math.min(p.maxHp, p.hp + 25); },
   },
   {

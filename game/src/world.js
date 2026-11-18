@@ -89,6 +89,8 @@ export function createWorld(random) {
     levelUpsPending: 0,
     attractTimer: 0,
     wave: 0,
+    combo: 0,
+    comboTimer: 0,
   };
 
   function reset() {
@@ -114,6 +116,8 @@ export function createWorld(random) {
     state.pendingChoices = null;
     state.levelUpsPending = 0;
     state.attractTimer = 0;
+    state.combo = 0;
+    state.comboTimer = 0;
     waves.betweenTimer = 1.2;
     waves.wave = 0;
   }
@@ -142,6 +146,14 @@ export function createWorld(random) {
     enemy.dead = true;
     state.kills += 1;
     state.score += enemy.score;
+    // Ember chain: quick kills in a row feed a combo that pays a small bonus and
+    // flashes on screen, so aggressive play feels — and scores — better.
+    state.combo += 1;
+    state.comboTimer = 2.5;
+    if (state.combo >= 3) state.score += Math.min(state.combo, 12);
+    if (state.combo === 5 || state.combo === 10 || state.combo === 15 || state.combo === 25) {
+      addFloater(state, enemy.x, enemy.y - enemy.radius - 26, `EMBER CHAIN ×${state.combo}`, '#ff9d3c', 18);
+    }
     addFloater(state, enemy.x, enemy.y - enemy.radius - 6, `+${enemy.score}`, '#ffe08a', 15);
     burst(state, enemy.x, enemy.y, isBoss(enemy) ? 46 : 14, enemy.colour, isBoss(enemy) ? 260 : 170, 0.7, 4);
     burst(state, enemy.x, enemy.y, 8, '#ffe9b0', 120, 0.5, 3);
@@ -268,7 +280,11 @@ export function createWorld(random) {
     if (kind !== null) {
       const enemy = spawnEnemy(random, kind, waves.wave, waves.hpScale, waves.speedScale);
       state.enemies.push(enemy);
-      if (isBoss(enemy)) events |= EVENT_BOSS;
+      if (isBoss(enemy)) {
+        events |= EVENT_BOSS;
+        state.shake = Math.max(state.shake, 0.4);
+        addFloater(state, LANTERN.x, LANTERN.y - 90, '⚠ THE GLOOM MOTH COMES ⚠', '#ff5d73', 20);
+      }
     }
     if (waves.readyForNext) {
       startWave(waves, random, waves.wave + 1);
@@ -412,12 +428,15 @@ export function createWorld(random) {
       }
     }
 
-    // Wave cleared: bonus, a mended lantern, and either dawn or the next wave.
+    // Wave cleared: bonus, a mended lantern, the keeper catches breath, and either dawn or the next wave.
     if (waveCleared(waves, state.enemies.length)) {
       const bonus = 100 * waves.wave;
       state.score += bonus;
-      addFloater(state, LANTERN.x, LANTERN.y - 70, `WAVE ${waves.wave} CLEAR  +${bonus}`, '#ffe08a', 18);
+      addFloater(state, LANTERN.x + 320, LANTERN.y + 150, `WAVE ${waves.wave} CLEAR  +${bonus}`, '#ffe08a', 18);
       lantern.hp = Math.min(lantern.maxHp, lantern.hp + LANTERN_MEND_BETWEEN_WAVES);
+      healPlayer(player, 12);
+      state.combo = 0;
+      state.comboTimer = 0;
       events |= EVENT_WAVE_CLEAR;
       if (waves.wave >= WAVES_TO_WIN) {
         state.won = true;
@@ -425,6 +444,12 @@ export function createWorld(random) {
       } else {
         startBetweenWaves(waves);
       }
+    }
+
+    // The ember chain cools off when the keeper stops burning shadows.
+    if (state.comboTimer > 0) {
+      state.comboTimer -= dt;
+      if (state.comboTimer <= 0) state.combo = 0;
     }
 
     stepParticles(dt);

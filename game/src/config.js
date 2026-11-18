@@ -14,15 +14,15 @@ export const WAVES_TO_WIN = 10;
 export const PLAYER = {
   radius: 14,
   speed: 255,
-  maxHp: 100,
+  maxHp: 110,
   pickupRadius: 46,
-  fireInterval: 0.34,
+  fireInterval: 0.32,
   boltSpeed: 640,
-  boltDamage: 14,
+  boltDamage: 15,
   boltRadius: 5,
-  invulnerable: 0.8,
-  xpNextBase: 5,
-  xpNextPerLevel: 4,
+  invulnerable: 1.0,
+  xpNextBase: 4,
+  xpNextPerLevel: 3,
 };
 
 export const BOLT = { radius: 5, life: 1.4 };
@@ -31,35 +31,38 @@ export const SHARD = { radius: 7, value: 1, life: 25 };
 
 /** Enemy kinds. `target` is who they hunt: 'player', 'lantern', or 'nearest'. */
 export const ENEMY = {
-  moth: { hp: 18, speed: 98, radius: 13, touch: 8, lanternTouch: 5, score: 10, shards: 1, target: 'nearest', colour: '#b78cff' },
-  thorn: { hp: 58, speed: 52, radius: 18, touch: 14, lanternTouch: 8, score: 25, shards: 3, target: 'lantern', colour: '#7fe08a' },
-  eater: { hp: 30, speed: 132, radius: 12, touch: 10, lanternTouch: 7, score: 15, shards: 2, target: 'player', colour: '#ff9d5c' },
-  boss: { hp: 540, speed: 62, radius: 42, touch: 18, lanternTouch: 10, score: 200, shards: 10, target: 'nearest', colour: '#e5536b' },
+  moth: { hp: 18, speed: 98, radius: 13, touch: 7, lanternTouch: 4, score: 10, shards: 1, target: 'nearest', colour: '#b78cff' },
+  thorn: { hp: 58, speed: 52, radius: 18, touch: 12, lanternTouch: 6, score: 25, shards: 3, target: 'lantern', colour: '#7fe08a' },
+  eater: { hp: 30, speed: 124, radius: 12, touch: 9, lanternTouch: 5, score: 15, shards: 2, target: 'player', colour: '#ff9d5c' },
+  boss: { hp: 500, speed: 62, radius: 42, touch: 16, lanternTouch: 8, score: 200, shards: 10, target: 'nearest', colour: '#e5536b' },
 };
 
-/** Wave n (1-based) composition: how many of each kind queue up, and how fast they arrive. */
+/** Wave n (1-based) composition: how many of each kind queue up, and how fast they arrive.
+ *  The early curve is deliberately gentle — fewer foes, slower trickle, thorns and eaters
+ *  debut on waves 3 and 4 — so a human player learns the guard before the swarm thickens.
+ *  Late waves keep the probe's full pressure (counts and scaling catch up by wave 6+). */
 export function waveComposition(n) {
-  const moths = 4 + 3 * n;
-  const thorns = n >= 2 ? 1 + Math.floor(n / 2) : 0;
-  const eaters = n >= 3 ? 2 * n - 2 : 0;
+  const moths = 4 + 3 * n - (n <= 2 ? 2 : 0);
+  const thorns = n >= 3 ? Math.floor(n / 2) : 0;
+  const eaters = n >= 4 ? 2 * n - 4 : 0;
   const boss = n % 5 === 0 ? 1 : 0;
-  const interval = Math.max(0.42, 1.05 - 0.05 * n);
-  const hpScale = 1 + 0.09 * (n - 1);
+  const interval = Math.max(0.42, 1.25 - 0.06 * n);
+  const hpScale = 1 + 0.08 * (n - 1);
   const speedScale = 1 + 0.02 * (n - 1);
   return { moths, thorns, eaters, boss, interval, hpScale, speedScale };
 }
 
 /** Seconds of calm between waves; the lantern mends a little in the lull. */
 export const BETWEEN_WAVES = 4;
-export const LANTERN_MEND_BETWEEN_WAVES = 12;
+export const LANTERN_MEND_BETWEEN_WAVES = 18;
 
 /** Damage per second the lantern's own flame deals to anything touching it. */
-export const LANTERN_FLAME_DPS = 6;
+export const LANTERN_FLAME_DPS = 16;
 
 /** At most this many enemies alive at once; the rest wait in the wave queue. */
 export const MAX_ALIVE = 22;
 
-export const LANTERN_MAX_HP = 100;
+export const LANTERN_MAX_HP = 120;
 export const LANTERN_AURA_BASE_RADIUS = 95;
 export const LANTERN_AURA_BASE_DPS = 0;
 

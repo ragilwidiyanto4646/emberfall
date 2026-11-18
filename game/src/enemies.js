@@ -75,7 +75,7 @@ export function moveEnemy(enemy, dt, target, time) {
 export function bossSpawnTimer(enemy, dt) {
   enemy.spawnTimer -= dt;
   if (enemy.spawnTimer <= 0) {
-    enemy.spawnTimer = 8;
+    enemy.spawnTimer = 10;
     return true;
   }
   return false;

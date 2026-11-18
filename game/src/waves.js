@@ -18,6 +18,7 @@ export function createWaves() {
     active: false,
     banner: 0,
     bannerText: '',
+    bannerSub: '',
   };
 }
 
@@ -53,6 +54,12 @@ export function startWave(waves, random, n) {
   waves.betweenTimer = 0;
   waves.banner = 2.4;
   waves.bannerText = n % 5 === 0 ? `WAVE ${n} — THE GLOOM MOTH` : `WAVE ${n}`;
+  waves.bannerSub = n % 5 === 0
+    ? 'burn the boss — its brood follows'
+    : n === 3 ? 'new foe: thorn wisps creep for the lantern'
+      : n === 4 ? 'new foe: ember-eaters hunt the keeper'
+        : n === 1 ? 'moths drift in — guard the flame'
+          : '';
 }
 
 /** Begin the calm between waves. */
@@ -61,6 +68,7 @@ export function startBetweenWaves(waves) {
   waves.betweenTimer = BETWEEN_WAVES;
   waves.banner = 2.0;
   waves.bannerText = 'THE GARDEN BREATHES…';
+  waves.bannerSub = 'the lantern mends — catch your breath';
 }
 
 /**

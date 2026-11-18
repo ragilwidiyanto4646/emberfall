@@ -88,11 +88,12 @@ export function createUi() {
     const remaining = state.enemies.length + state.waves.queue.length;
     bodyText(ctx, state.waves.active ? `${remaining} shadow${remaining === 1 ? '' : 's'} remain` : 'the garden breathes…', FIELD.width / 2, 68, 14, PALETTE.muted);
 
-    // Top-right: score, kills, mute.
+    // Top-right: score, kills, ember chain, mute.
     ctx.textAlign = 'right';
     bodyText(ctx, `SCORE  ${state.score}`, FIELD.width - 24, 34, 20, PALETTE.text, 'right');
     bodyText(ctx, `${state.kills} vanquished`, FIELD.width - 24, 58, 13, PALETTE.muted, 'right');
-    bodyText(ctx, muted ? 'M — sound off' : 'M — sound on', FIELD.width - 24, 80, 12, PALETTE.muted, 'right');
+    if (state.combo >= 3) bodyText(ctx, `EMBER CHAIN ×${state.combo}`, FIELD.width - 24, 80, 14, '#ff9d3c', 'right');
+    bodyText(ctx, muted ? 'M — sound off' : 'M — sound on', FIELD.width - 24, state.combo >= 3 ? 102 : 80, 12, PALETTE.muted, 'right');
 
     // Lantern health, under the wave label: the flame you are guarding.
     const lfrac = lantern.hp / lantern.maxHp;
@@ -105,6 +106,7 @@ export function createUi() {
       const alpha = Math.min(1, state.waves.banner / 0.6);
       ctx.globalAlpha = alpha;
       titleText(ctx, state.waves.bannerText, FIELD.width / 2, 210, 40, '#ffe9b0');
+      if (state.waves.bannerSub) bodyText(ctx, state.waves.bannerSub, FIELD.width / 2, 244, 17, PALETTE.muted);
       ctx.globalAlpha = 1;
     }
   }
@@ -123,7 +125,8 @@ export function createUi() {
     bodyText(ctx, 'and hold until dawn breaks.', 640, 338, 18, PALETTE.text);
     bodyText(ctx, 'WASD / arrows — move      Mouse — aim      Hold click — shoot (or it fires on its own)', 640, 388, 16, PALETTE.muted);
     bodyText(ctx, 'Shadows hunt you AND the lantern. Gather light shards, level up, choose blessings.', 640, 414, 16, PALETTE.muted);
-    bodyText(ctx, 'P — pause      M — mute      R — restart', 640, 440, 16, PALETTE.muted);
+    bodyText(ctx, 'A red thread marks a shadow creeping for the lantern — burn it first.', 640, 438, 16, '#ff8ba0');
+    bodyText(ctx, 'P — pause      M — mute      R — restart', 640, 464, 16, PALETTE.muted);
     // Start button.
     const bw = 300;
     const bh = 62;

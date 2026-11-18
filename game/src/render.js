@@ -4,6 +4,7 @@
 // canvas, scaled to fit, and shakes the whole view when the world says so.
 
 import { FIELD, FONT, LANTERN, PALETTE } from './config.js';
+import { enemyTarget } from './enemies.js';
 import { auraRadius } from './upgrades.js';
 
 export const SCREEN_TITLE = 'title';
@@ -32,11 +33,19 @@ export function createRenderer(canvas) {
   function drawGround(state) {
     ctx.fillStyle = PALETTE.backdrop;
     ctx.fillRect(0, 0, FIELD.width, FIELD.height);
-    // The garden floor: a soft radial wash, darker at the edges.
+    // The garden floor: a soft radial wash, darker at the edges. The wash shifts with
+    // the night — boss waves burn red at the edges, late waves sink deeper violet —
+    // so each wave reads differently in a screenshot.
+    const wave = state.waves.wave;
+    const washStops = wave % 5 === 0 && wave > 0
+      ? ['#2c1f4e', '#1c1436', '#120a24']
+      : wave >= 8 ? ['#1d2350', '#141736', '#0a0c20']
+        : wave >= 5 ? ['#262a58', '#181b3c', '#0c0e22']
+          : ['#232650', '#171a38', '#0b0d20'];
     const wash = ctx.createRadialGradient(LANTERN.x, LANTERN.y, 60, LANTERN.x, LANTERN.y, 700);
-    wash.addColorStop(0, '#232650');
-    wash.addColorStop(0.55, '#171a38');
-    wash.addColorStop(1, '#0b0d20');
+    wash.addColorStop(0, washStops[0]);
+    wash.addColorStop(0.55, washStops[1]);
+    wash.addColorStop(1, washStops[2]);
     ctx.fillStyle = wash;
     ctx.fillRect(0, 0, FIELD.width, FIELD.height);
     // Grass tufts sway in the dark.
@@ -141,6 +150,39 @@ export function createRenderer(canvas) {
 
   function drawEnemy(state, enemy) {
     const flash = enemy.hitFlash > 0;
+    // Telegraph: a shadow marching on the lantern shows a dashed red thread to it,
+    // pulsing hard when it is about to bite — the keeper can see the danger coming
+    // and which foe to burn first. The boss always wears a pulsing danger ring.
+    const target = enemyTarget(enemy, state.player, state.lantern);
+    const toLantern = Math.hypot(enemy.x - LANTERN.x, enemy.y - LANTERN.y);
+    if (target === state.lantern && toLantern < 300) {
+      const near = toLantern < 120;
+      const pulse = 0.35 + 0.3 * Math.sin(state.time * 8);
+      ctx.strokeStyle = `rgba(255, 93, 115, ${near ? Math.max(0.55, pulse + 0.3).toFixed(3) : pulse.toFixed(3)})`;
+      ctx.lineWidth = near ? 3 : 2;
+      ctx.setLineDash([6, 8]);
+      ctx.beginPath();
+      ctx.moveTo(enemy.x, enemy.y);
+      ctx.lineTo(LANTERN.x, LANTERN.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (near) {
+        ctx.strokeStyle = `rgba(255, 93, 115, ${Math.max(0.4, pulse).toFixed(3)})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(enemy.x, enemy.y, enemy.radius + 8 + Math.sin(state.time * 8) * 3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+    if (enemy.kind === 'boss') {
+      ctx.strokeStyle = `rgba(255, 93, 115, ${(0.4 + 0.25 * Math.sin(state.time * 5)).toFixed(3)})`;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 8]);
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y, 92 + Math.sin(state.time * 5) * 5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     ctx.save();
     ctx.translate(enemy.x, enemy.y);
     if (enemy.kind === 'moth') {
@@ -339,6 +381,16 @@ export function createRenderer(canvas) {
     }
     if (state.flash > 0) {
       ctx.fillStyle = `rgba(255, 170, 60, ${(state.flash * 0.18).toFixed(3)})`;
+      ctx.fillRect(0, 0, FIELD.width, FIELD.height);
+    }
+    // A failing lantern throbs red at the screen's edge — impossible to miss.
+    const lfrac = state.lantern.hp / state.lantern.maxHp;
+    if (lfrac < 0.3 && !state.over) {
+      const throb = 0.10 + 0.08 * Math.sin(state.time * 6);
+      const edge = ctx.createRadialGradient(640, 360, 260, 640, 360, 720);
+      edge.addColorStop(0, 'rgba(255, 40, 70, 0)');
+      edge.addColorStop(1, `rgba(255, 40, 70, ${throb.toFixed(3)})`);
+      ctx.fillStyle = edge;
       ctx.fillRect(0, 0, FIELD.width, FIELD.height);
     }
   }
